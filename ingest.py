@@ -5,16 +5,12 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
-
-# Configuration
 UNSPLASH_ACCESS_KEY = os.getenv('UNSPLASH_ACCESS_KEY')
 BASE_URL = 'https://api.unsplash.com'
 IMAGES_DIR = Path('data/images')
 METADATA_FILE = Path('data/raw_metadata.json')
 
-# Search queries for landscape images
 SEARCH_QUERIES = [
     'landscape mountains',
     'landscape ocean',
@@ -25,34 +21,22 @@ SEARCH_QUERIES = [
 ]
 
 # API rate limit: 50 requests per hour
-RATE_LIMIT_DELAY = 2  # seconds between requests
+RATE_LIMIT_DELAY = 2 
 
 
 def setup_directories():
-    """Create necessary directories if they don't exist"""
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     METADATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     print(f"✓ Created directories")
 
-
+# Fetch images from Unsplash API
 def fetch_images(query, per_page=30, page=1):
-    """
-    Fetch images from Unsplash API
-    
-    Args:
-        query: Search term
-        per_page: Number of results (max 30)
-        page: Page number
-    
-    Returns:
-        List of image metadata dictionaries
-    """
     url = f'{BASE_URL}/search/photos'
     params = {
         'query': query,
         'per_page': per_page,
         'page': page,
-        'orientation': 'landscape',  # Only landscape orientation
+        'orientation': 'landscape',
         'client_id': UNSPLASH_ACCESS_KEY
     }
     
@@ -68,42 +52,24 @@ def fetch_images(query, per_page=30, page=1):
         print(f"  ✗ Error fetching '{query}': {e}")
         return []
 
-
+# Extract location and country
 def extract_location(image_data):
-    """
-    Extract location name and country from Unsplash metadata
-    
-    Note: Not all images have location data
-    """
     location = image_data.get('location', {})
     
     location_name = None
     country = None
     
-    # Try to get location name (city, landmark, etc.)
     if location.get('name'):
         location_name = location['name']
     elif location.get('city'):
         location_name = location['city']
-    
-    # Get country
     if location.get('country'):
         country = location['country']
     
     return location_name, country
 
-
+# Extract relevant metadat from API call
 def parse_image_metadata(image_data, query):
-    """
-    Extract relevant metadata from Unsplash API response
-    
-    Args:
-        image_data: Raw JSON from Unsplash API
-        query: Search query used
-    
-    Returns:
-        Dictionary with cleaned metadata
-    """
     location_name, country = extract_location(image_data)
     
     metadata = {
@@ -126,18 +92,8 @@ def parse_image_metadata(image_data, query):
     
     return metadata
 
-
+# Download images
 def download_image(image_url, image_id):
-    """
-    Download image to local storage
-    
-    Args:
-        image_url: URL to download from
-        image_id: Unique ID for filename
-    
-    Returns:
-        True if successful, False otherwise
-    """
     try:
         response = requests.get(image_url, timeout=15)
         response.raise_for_status()
@@ -152,51 +108,42 @@ def download_image(image_url, image_id):
         print(f"    ✗ Failed to download {image_id}: {e}")
         return False
 
-
+# Main ingestion pipeline
 def main():
-    """Main ingestion pipeline"""
-    
-    # Check API key
     if not UNSPLASH_ACCESS_KEY:
         print("❌ Error: UNSPLASH_ACCESS_KEY not found in .env file")
         return
     
-    print("🚀 Starting image ingestion pipeline...\n")
+    print("Starting image ingestion pipeline...\n")
     
-    # Setup
     setup_directories()
-    
     all_metadata = []
     images_downloaded = 0
     target_images = 300
     
-    # Fetch images for each query
     for query in SEARCH_QUERIES:
-        print(f"\n📸 Searching: '{query}'")
+        print(f"\nSearching: '{query}'")
         
         # Fetch 2 pages per query (60 images)
         for page in range(1, 3):
-            
+
             # Respect rate limits
             time.sleep(RATE_LIMIT_DELAY)
-            
             images = fetch_images(query, per_page=30, page=page)
             
+            # Parse metadata
             for img in images:
-                # Parse metadata
                 metadata = parse_image_metadata(img, query)
                 
                 # Download image
                 success = download_image(metadata['download_url'], metadata['id'])
-                
                 if success:
                     metadata['downloaded'] = 1
                     images_downloaded += 1
                     print(f"    ✓ Downloaded {metadata['id']} ({images_downloaded}/{target_images})")
                 
                 all_metadata.append(metadata)
-                
-                # Stop if we hit target
+
                 if images_downloaded >= target_images:
                     break
             
@@ -219,12 +166,9 @@ def main():
     
     # Quick stats
     with_location = sum(1 for m in all_metadata if m['location_name'])
-    print(f"\n📍 Location data:")
+    print(f"\nLocation data:")
     print(f"  • Images with location: {with_location}")
     print(f"  • Images without location: {len(all_metadata) - with_location}")
-    
-    print("\n✅ Day 1 complete!")
-
 
 if __name__ == '__main__':
     main()
