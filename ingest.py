@@ -340,39 +340,33 @@ def main():
     for query in SEARCH_QUERIES:
         print(f"\n📸 Searching: '{query}'")
         
-        # Fetch 2 pages per query (60 images)
-        for page in range(1, 3):
+        # Fetch only 10-15 images per query for maximum variety
+        time.sleep(RATE_LIMIT_DELAY)
+        images = fetch_images(query, per_page=10, page=1)
+        
+        # Parse metadata
+        for img in images:
+            metadata = parse_image_metadata(img, query)
             
-            # Respect rate limits
-            time.sleep(RATE_LIMIT_DELAY)
-            images = fetch_images(query, per_page=30, page=page)
+            # Download image
+            success = download_image(metadata['download_url'], metadata['id'])
+            if success:
+                metadata['downloaded'] = 1
+                images_downloaded += 1
+                
+                # Show location if found
+                loc_info = ""
+                if metadata['location_name']:
+                    loc_info = f" - {metadata['location_name']}"
+                    if metadata['country']:
+                        loc_info += f", {metadata['country']}"
+                elif metadata['country']:
+                    loc_info = f" - {metadata['country']}"
+                
+                print(f"    ✓ Downloaded {metadata['id']} ({images_downloaded}/{target_images}){loc_info}")
             
-            # Parse metadata
-            for img in images:
-                metadata = parse_image_metadata(img, query)
-                
-                # Download image
-                success = download_image(metadata['download_url'], metadata['id'])
-                if success:
-                    metadata['downloaded'] = 1
-                    images_downloaded += 1
-                    
-                    # Show location if found
-                    loc_info = ""
-                    if metadata['location_name']:
-                        loc_info = f" - {metadata['location_name']}"
-                        if metadata['country']:
-                            loc_info += f", {metadata['country']}"
-                    elif metadata['country']:
-                        loc_info = f" - {metadata['country']}"
-                    
-                    print(f"    ✓ Downloaded {metadata['id']} ({images_downloaded}/{target_images}){loc_info}")
-                
-                all_metadata.append(metadata)
+            all_metadata.append(metadata)
 
-                if images_downloaded >= target_images:
-                    break
-            
             if images_downloaded >= target_images:
                 break
         
