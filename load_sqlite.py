@@ -151,7 +151,6 @@ def verify_database(cursor):
     
     print()
 
-
 def main():
     """Main database loading pipeline"""
     print("🗄️  DAY 3: Loading Data into SQLite Database\n")
