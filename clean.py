@@ -4,7 +4,6 @@ Removes duplicates, validates image quality, and enhances metadata.
 """
 import json
 import logging
-from pathlib import Path
 from collections import Counter
 
 import config
@@ -156,7 +155,7 @@ def save_cleaned_data(data):
     """Save cleaned metadata to JSON."""
     with open(config.CLEANED_METADATA_FILE, 'w') as f:
         json.dump(data, f, indent=2)
-    logger.info(f"Saved {len(data)} cleaned records to {config.CLEANED_METADATA_FILE}")
+    logger.info(f"Saved {len(data)} cleaned records")
 
 
 def generate_report(stats, cleaned_count, failed_counts):
