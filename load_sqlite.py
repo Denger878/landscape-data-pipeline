@@ -176,9 +176,6 @@ def main():
     # Step 6: Verify database
     verify_database(cursor)
     
-    # Step 7: Create example queries file
-    create_example_queries()
-    
     # Close connection
     conn.close()
     
