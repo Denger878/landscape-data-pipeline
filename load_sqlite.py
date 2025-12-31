@@ -107,7 +107,7 @@ def verify_database(cursor):
     
     # Average dimensions
     cursor.execute("SELECT AVG(width), AVG(height) FROM images")
-    avg_width, avg_height = cursor.fetchone()[0], cursor.fetchone()[0]
+    avg_width, avg_height = cursor.fetchone()
     
     logger.info(f"Verification: {total} images, {with_location} with location, "
                 f"{with_country} with country")
