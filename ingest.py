@@ -111,7 +111,7 @@ def parse_image_metadata(image_data, query):
     return {
         'id': image_data['id'],
         'image_url': image_data['urls']['regular'],
-        'download_url': image_data['urls']['full'],
+        'download_url': image_data['urls']['regular'],  # Use regular for faster downloads
         'page_url': image_data['links']['html'],
         'location_name': location_name,
         'country': country,
