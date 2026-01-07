@@ -27,12 +27,6 @@ wheels/
 .env
 .env.local
 
-# Data files (too large for git)
-data/
-db/
-*.db
-*.json
-
 # IDEs
 .vscode/
 .idea/
