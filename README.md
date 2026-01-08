@@ -2,7 +2,7 @@
 
 A data pipeline and REST API serving high-quality landscape photographs with location metadata.
 
-**[Live API](https://landscape-data-pipeline-production.up.railway.app)**
+**[Live API](https://landscape-data-pipeline-production.up.railway.app/api/random)**
 
 ## About
 
