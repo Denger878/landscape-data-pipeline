@@ -23,6 +23,12 @@ wheels/
 .installed.cfg
 *.egg
 
+# Downloaded images (hundreds of MB; the API serves Unsplash URLs instead)
+data/images/
+
+# Partial database builds
+db/*.tmp
+
 # Environment variables
 .env
 .env.local
@@ -38,10 +44,6 @@ wheels/
 *.log
 
 # Temporary files
-remove_images.py
-sync_metadata.py
-cleanup_images.py
-ids_to_remove.txt
 *_backup.json
 *_old.py
 
@@ -53,3 +55,6 @@ ids_to_remove.txt
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Test caches
+.pytest_cache/

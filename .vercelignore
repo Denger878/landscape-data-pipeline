@@ -1,0 +1,6 @@
+# The API only needs api.py, config.py and db/images.db
+data/
+tests/
+.github/
+.env
+.env.local

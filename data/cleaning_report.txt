@@ -4,8 +4,8 @@ DATA CLEANING REPORT
 INITIAL DATA
   Total records: 308
   Successfully downloaded: 308
-  With location: 27
-  With country: 27
+  With location: 33
+  With country: 32
 
 ISSUES FOUND
   Duplicates: 2

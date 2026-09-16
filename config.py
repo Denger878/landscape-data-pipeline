@@ -1,4 +1,5 @@
 """Pipeline configuration."""
+import logging
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent
@@ -24,6 +25,13 @@ MIN_ASPECT_RATIO = 1.3
 
 REQUIRED_FIELDS = ['id', 'image_url', 'photographer_name', 'width', 'height']
 
+# Hand-picked Unsplash photo IDs added on top of the search results
+MANUAL_PHOTO_IDS = [
+    'wCmmOL6K_Qk', 'mwefJd0HdHk', '4uo97dAkX5Q', 'Mou_j-PpY2U',
+    '_oWq2fKkT90', 'zaXHqMItpcc', 'rauWKt-AVSo', 'BcdrybyRkxc'
+]
+MANUAL_QUERY = 'manual_addition'
+
 SEARCH_QUERIES = [
     'turquoise waterfall', 'cascade waterfall', 'natural hot springs',
     'geyser eruption', 'thermal pool', 'crystal clear lake',
@@ -41,35 +49,63 @@ SEARCH_QUERIES = [
     'tulip fields', 'cherry blossom mountain'
 ]
 
+# keyword -> (landmark name, country)
 LANDMARK_KEYWORDS = {
-    'jokulsarlon': 'Jökulsárlón Glacier Lagoon', 'skogafoss': 'Skógafoss',
-    'seljalandsfoss': 'Seljalandsfoss', 'gulfoss': 'Gullfoss',
-    'reynisfjara': 'Reynisfjara Black Beach', 'kirkjufell': 'Kirkjufell',
-    'yosemite': 'Yosemite Valley', 'grand canyon': 'Grand Canyon',
-    'yellowstone': 'Yellowstone', 'zion': 'Zion National Park',
-    'bryce canyon': 'Bryce Canyon', 'arches': 'Arches National Park',
-    'antelope canyon': 'Antelope Canyon', 'crater lake': 'Crater Lake',
-    'death valley': 'Death Valley', 'monument valley': 'Monument Valley',
-    'sedona': 'Sedona', 'havasu falls': 'Havasu Falls',
-    'banff': 'Banff National Park', 'moraine lake': 'Moraine Lake',
-    'lake louise': 'Lake Louise', 'peyto lake': 'Peyto Lake',
-    'jasper': 'Jasper National Park', 'patagonia': 'Patagonia',
-    'torres del paine': 'Torres del Paine', 'iguazu': 'Iguazu Falls',
-    'salar de uyuni': 'Salar de Uyuni', 'machu picchu': 'Machu Picchu',
-    'atacama': 'Atacama Desert', 'perito moreno': 'Perito Moreno Glacier',
-    'dolomites': 'Dolomites', 'matterhorn': 'Matterhorn',
-    'lofoten': 'Lofoten Islands', 'faroe': 'Faroe Islands',
-    'plitvice': 'Plitvice Lakes', 'lake bled': 'Lake Bled',
-    'swiss alps': 'Swiss Alps', 'scottish highlands': 'Scottish Highlands',
-    'amalfi': 'Amalfi Coast', 'cinque terre': 'Cinque Terre',
-    'santorini': 'Santorini', 'meteora': 'Meteora',
-    'cappadocia': 'Cappadocia', 'pamukkale': 'Pamukkale',
-    'mount fuji': 'Mount Fuji', 'zhangjiajie': 'Zhangjiajie',
-    'guilin': 'Guilin', 'halong bay': 'Halong Bay',
-    'phi phi': 'Phi Phi Islands', 'bali': 'Bali',
-    'milford sound': 'Milford Sound', 'mount cook': 'Mount Cook',
-    'lake tekapo': 'Lake Tekapo', 'uluru': 'Uluru',
-    'twelve apostles': 'Twelve Apostles', 'fiordland': 'Fiordland'
+    'jokulsarlon': ('Jökulsárlón Glacier Lagoon', 'Iceland'),
+    'skogafoss': ('Skógafoss', 'Iceland'),
+    'seljalandsfoss': ('Seljalandsfoss', 'Iceland'),
+    'gullfoss': ('Gullfoss', 'Iceland'),
+    'reynisfjara': ('Reynisfjara Black Beach', 'Iceland'),
+    'kirkjufell': ('Kirkjufell', 'Iceland'),
+    'yosemite': ('Yosemite Valley', 'United States'),
+    'grand canyon': ('Grand Canyon', 'United States'),
+    'yellowstone': ('Yellowstone', 'United States'),
+    'zion': ('Zion National Park', 'United States'),
+    'bryce canyon': ('Bryce Canyon', 'United States'),
+    'arches national park': ('Arches National Park', 'United States'),
+    'antelope canyon': ('Antelope Canyon', 'United States'),
+    'crater lake': ('Crater Lake', 'United States'),
+    'death valley': ('Death Valley', 'United States'),
+    'monument valley': ('Monument Valley', 'United States'),
+    'sedona': ('Sedona', 'United States'),
+    'havasu falls': ('Havasu Falls', 'United States'),
+    'banff': ('Banff National Park', 'Canada'),
+    'moraine lake': ('Moraine Lake', 'Canada'),
+    'lake louise': ('Lake Louise', 'Canada'),
+    'peyto lake': ('Peyto Lake', 'Canada'),
+    'jasper national park': ('Jasper National Park', 'Canada'),
+    'torres del paine': ('Torres del Paine', 'Chile'),
+    'iguazu': ('Iguazu Falls', 'Argentina'),
+    'salar de uyuni': ('Salar de Uyuni', 'Bolivia'),
+    'machu picchu': ('Machu Picchu', 'Peru'),
+    'atacama': ('Atacama Desert', 'Chile'),
+    'perito moreno': ('Perito Moreno Glacier', 'Argentina'),
+    'dolomites': ('Dolomites', 'Italy'),
+    'matterhorn': ('Matterhorn', 'Switzerland'),
+    'lofoten': ('Lofoten Islands', 'Norway'),
+    'faroe': ('Faroe Islands', 'Faroe Islands'),
+    'plitvice': ('Plitvice Lakes', 'Croatia'),
+    'lake bled': ('Lake Bled', 'Slovenia'),
+    'swiss alps': ('Swiss Alps', 'Switzerland'),
+    'scottish highlands': ('Scottish Highlands', 'Scotland'),
+    'amalfi': ('Amalfi Coast', 'Italy'),
+    'cinque terre': ('Cinque Terre', 'Italy'),
+    'santorini': ('Santorini', 'Greece'),
+    'meteora': ('Meteora', 'Greece'),
+    'cappadocia': ('Cappadocia', 'Turkey'),
+    'pamukkale': ('Pamukkale', 'Turkey'),
+    'mount fuji': ('Mount Fuji', 'Japan'),
+    'zhangjiajie': ('Zhangjiajie', 'China'),
+    'guilin': ('Guilin', 'China'),
+    'halong bay': ('Halong Bay', 'Vietnam'),
+    'phi phi': ('Phi Phi Islands', 'Thailand'),
+    'bali': ('Bali', 'Indonesia'),
+    'milford sound': ('Milford Sound', 'New Zealand'),
+    'mount cook': ('Mount Cook', 'New Zealand'),
+    'lake tekapo': ('Lake Tekapo', 'New Zealand'),
+    'uluru': ('Uluru', 'Australia'),
+    'twelve apostles': ('Twelve Apostles', 'Australia'),
+    'fiordland': ('Fiordland', 'New Zealand'),
 }
 
 COUNTRY_KEYWORDS = {
@@ -84,5 +120,15 @@ COUNTRY_KEYWORDS = {
     'california': 'United States', 'arizona': 'United States',
     'utah': 'United States', 'colorado': 'United States',
     'montana': 'United States', 'oregon': 'United States',
-    'washington': 'United States'
+    'washington': 'United States', 'hawaii': 'United States',
+    'wyoming': 'United States', 'nevada': 'United States',
+    'alaska': 'United States', 'argentina': 'Argentina'
 }
+
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )

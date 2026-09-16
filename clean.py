@@ -4,12 +4,9 @@ import logging
 from collections import Counter
 
 import config
+from location import extract_location_from_text, is_text_derived
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+config.setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -90,6 +87,29 @@ def validate_images(data):
     return valid_data, failed_counts
 
 
+def refine_locations(data):
+    """Re-run keyword location matching on records that have no Unsplash location."""
+    changed = 0
+    for item in data:
+        if not is_text_derived(item.get('location_name')):
+            continue
+
+        location_name, country = extract_location_from_text(item.get('description'))
+        existing_country = item.get('country')
+        if existing_country:
+            # A known country wins over a landmark from another country
+            if location_name and country != existing_country:
+                location_name = None
+            country = existing_country
+
+        if (location_name, country) != (item.get('location_name'), existing_country):
+            item['location_name'], item['country'] = location_name, country
+            changed += 1
+
+    logger.info(f"Refined locations: {changed} records updated")
+    return data
+
+
 def enhance_metadata(data):
     for item in data:
         if item.get('width') and item.get('height'):
@@ -146,7 +166,7 @@ def main():
     stats = analyze_data(raw_data)
     unique_data = remove_duplicates(raw_data)
     valid_data, failed_counts = validate_images(unique_data)
-    cleaned_data = enhance_metadata(valid_data)
+    cleaned_data = enhance_metadata(refine_locations(valid_data))
     save_cleaned_data(cleaned_data)
     generate_report(stats, len(cleaned_data), failed_counts)
     
