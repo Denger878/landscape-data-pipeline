@@ -48,6 +48,8 @@ api.py ─────► Vercel                        read-only Flask API
 
 ## API
 
+Base URL: `https://landscape-data-pipeline.vercel.app`
+
 | Endpoint | Description |
 | --- | --- |
 | `GET /api/random` | Random image |
